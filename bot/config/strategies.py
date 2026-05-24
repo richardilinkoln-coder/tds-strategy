@@ -66,9 +66,16 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "emoji": "❄️",
         "modes": {
             "solo": "https://docs.google.com/document/d/123mTVHx7CYVKMSc5gconfTjpGScL07YFXwZfZcwnYjw/edit?tab=t.vv7j5i44mve0",
-            "duo": "https://docs.google.com/document/d/1LT-ViDySQeTrEeXY-ateAIkoQRpIdfG9rS2T_3RkjSs/edit?tab=t.j7622cginuso",
+            "duo": "https://docs.google.com/document/d/1LT-ViDySQeTrEeXY-ateAIkoQRpIdfG9rS2T_3RkjSs/edit?tab=t.j7622cginuso",         
         },
     },
+    "trials": {
+        "name": "Trials",
+        "emoji": "🎭",
+        "modes": {
+            "Сборник": "https://docs.google.com/document/d/1NzhAEK4WJ9cA2gDCcACtW-HXQHhJplrE-_ZKkPWXIJk/edit?tab=t.pdj0ytau4jf4",         
+        },
+    },      
 }
 
 def get_strategy(strategy_id: str) -> dict[str, object] | None:
