@@ -47,12 +47,15 @@ def _build_result_text(strategy_id: str, party_size: str, link: str) -> str:
     size_label = size_meta["label"] if size_meta else party_size
     size_emoji = size_meta["emoji"] if size_meta else "👥"
 
+    if link.startswith("http"):
+        doc_text = f'📄 <b>Документ:</b>\n<a href="{link}">Открыть документ</a>'
+    else:
+        doc_text = f'📄 {link}'
+
     return (
-        "✅ <b>Strategy found!</b>\n\n"
         f"{strategy_emoji} <b>{strategy_name}</b>\n"
         f"{size_emoji} <b>{size_label}</b>\n\n"
-        f"📄 <b>Документ:</b>\n"
-        f'<a href="{link}">Открыть документ</a>'
+        f"{doc_text}"
     )
 
 
