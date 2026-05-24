@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Final
 
 # Порядок размеров контролирует порядок кнопок.
-PARTY_SIZE_ORDER: Final[tuple[str, ...]] = ("solo", "duo", "trio", "quad", "Сборник", "Сервер","Текущий ивент", "Хардкор", "Монеты", "Сборник: миссии", "Сборник: триалы")
+PARTY_SIZE_ORDER: Final[tuple[str, ...]] = ("solo", "duo", "trio", "quad", "Сборник", "Сервер","Текущий ивент", "Хардкор", "Монеты", "Сборник: миссии", "Сборник: триалы", "Сборник ачивок")
 
 PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "solo": {"label": "Solo", "emoji": "👤"},
@@ -16,6 +16,7 @@ PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "Хардкор": {"label": "Хардкор", "emoji": "😈"},
     "Текущий ивент": {"label": "Текущий ивент", "emoji": "💡"},
     "Сервер": {"label": "Сервер", "emoji": "🔱"},
+    "Сборник": {"label": "Сборник ачивок", "emoji": "📚"},
 }
 
 STRATEGIES: Final[dict[str, dict[str, object]]] = {
@@ -103,7 +104,7 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "name": "Achivements",
         "emoji": "💈",
         "modes": {
-            "Cборник": "Скоро будет",
+            "Cборник ачивок": "Скоро будет",
         },
     },
     "vip": {
