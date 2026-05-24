@@ -10,6 +10,7 @@ PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "duo": {"label": "Duo", "emoji": "👥"},
     "trio": {"label": "Trio", "emoji": "👥👤"},
     "quad": {"label": "Quad", "emoji": "👥👥"},
+    "Сборник": {"label": "Сборник", "emoji": "📚"},
 }
 
 STRATEGIES: Final[dict[str, dict[str, object]]] = {
