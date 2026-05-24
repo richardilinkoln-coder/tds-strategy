@@ -104,7 +104,7 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "name": "Achivements",
         "emoji": "💈",
         "modes": {
-            "Cборник ачивок": "Скоро будет",
+            "Сборник ачивок": "Скоро будет",
         },
     },
     "vip": {
