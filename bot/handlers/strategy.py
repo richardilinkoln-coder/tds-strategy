@@ -18,7 +18,7 @@ def _is_strategy_trigger(text: str | None) -> bool:
 
 def _build_menu_text() -> str:
     return (
-        "🎮 **Выбери режим:**\n\n"
+        "🎮 <b>Выбери режим:</b>\n\n"
         "Нажми на нужную карту, чтобы увидеть доступные размеры команды."
     )
 
@@ -26,12 +26,12 @@ def _build_menu_text() -> str:
 def _build_party_text(strategy_id: str) -> str:
     strategy = get_strategy(strategy_id)
     if not strategy:
-        return "❌ **Неизвестный режим**\n\nЭтот режим больше недоступен."
+        return "❌ <b>Неизвестный режим</b>\n\nЭтот режим больше недоступен."
 
     name = str(strategy["name"])
     emoji = str(strategy["emoji"])
     return (
-        f"🎮 **Режим:** {name} {emoji}\n\n"
+        f"🎮 <b>Режим:</b> {name} {emoji}\n\n"
         "Выбери размер команды:"
     )
 
@@ -39,7 +39,7 @@ def _build_party_text(strategy_id: str) -> str:
 def _build_result_text(strategy_id: str, party_size: str, link: str) -> str:
     strategy = get_strategy(strategy_id)
     if not strategy:
-        return "❌ **Ошибка**\n\nНе удалось найти режим."
+        return "❌ <b>Ошибка</b>\n\nНе удалось найти режим."
 
     strategy_name = str(strategy["name"])
     strategy_emoji = str(strategy["emoji"])
@@ -48,11 +48,11 @@ def _build_result_text(strategy_id: str, party_size: str, link: str) -> str:
     size_emoji = size_meta["emoji"] if size_meta else "👥"
 
     return (
-        "✅ **Strategy found\\!**\n\n"
-        f"{strategy_emoji} **{strategy_name}**\n"
-        f"{size_emoji} **{size_label}**\n\n"
-        f"📄 **Документ:**\n"
-        f"[Открыть документ]({link})"
+        "✅ <b>Strategy found!</b>\n\n"
+        f"{strategy_emoji} <b>{strategy_name}</b>\n"
+        f"{size_emoji} <b>{size_label}</b>\n\n"
+        f"📄 <b>Документ:</b>\n"
+        f'<a href="{link}">Открыть документ</a>'
     )
 
 
@@ -61,7 +61,7 @@ async def _safe_edit(message: Message | None, text: str, reply_markup=None) -> N
         return
 
     try:
-        await message.edit_text(text, reply_markup=reply_markup, parse_mode='MarkdownV2')
+        await message.edit_text(text, reply_markup=reply_markup, parse_mode='HTML')
     except TelegramBadRequest as exc:
         if "message is not modified" in str(exc).lower():
             return
@@ -75,7 +75,7 @@ async def on_strategy_trigger(message: Message) -> None:
         message.from_user.id if message.from_user else None,
         message.chat.id,
     )
-    await message.answer(_build_menu_text(), reply_markup=menu_keyboard(), parse_mode='MarkdownV2')
+    await message.answer(_build_menu_text(), reply_markup=menu_keyboard(), parse_mode='HTML')
 
 
 @router.callback_query(StrategyCB.filter())
@@ -86,7 +86,7 @@ async def on_strategy_selected(callback: CallbackQuery, callback_data: StrategyC
         await callback.answer("Этот режим больше недоступен", show_alert=True)
         await _safe_edit(
             callback.message,
-            "❌ **Неизвестный режим**\n\nЭтот режим больше недоступен.",
+            "❌ <b>Неизвестный режим</b>\n\nЭтот режим больше недоступен.",
             reply_markup=menu_keyboard(),
         )
         return
@@ -113,7 +113,7 @@ async def on_party_selected(callback: CallbackQuery, callback_data: PartyCB) -> 
         await callback.answer("Не удалось найти режим", show_alert=True)
         await _safe_edit(
             callback.message,
-            "❌ **Ошибка**\n\nНе удалось найти режим.",
+            "❌ <b>Ошибка</b>\n\nНе удалось найти режим.",
             reply_markup=menu_keyboard(),
         )
         return
@@ -128,7 +128,7 @@ async def on_party_selected(callback: CallbackQuery, callback_data: PartyCB) -> 
         await callback.answer("Этот размер команды недоступен", show_alert=True)
         await _safe_edit(
             callback.message,
-            "⚠️ **Этот размер команды недоступен**\n\n"
+            "⚠️ <b>Этот размер команды недоступен</b>\n\n"
             "Выбери другой вариант или вернись назад.",
             reply_markup=party_keyboard(callback_data.strategy_id),
         )
@@ -140,7 +140,7 @@ async def on_party_selected(callback: CallbackQuery, callback_data: PartyCB) -> 
         await callback.answer("Ошибка конфигурации", show_alert=True)
         await _safe_edit(
             callback.message,
-            "❌ **Ошибка конфигурации**\n\n"
+            "❌ <b>Ошибка конфигурации</b>\n\n"
             "У этого режима некорректно настроены ссылки.",
             reply_markup=menu_keyboard(),
         )
@@ -156,7 +156,7 @@ async def on_party_selected(callback: CallbackQuery, callback_data: PartyCB) -> 
         await callback.answer("Ссылка для этого размера отсутствует", show_alert=True)
         await _safe_edit(
             callback.message,
-            "⚠️ **Ссылка для этого размера отсутствует**\n\n"
+            "⚠️ <b>Ссылка для этого размера отсутствует</b>\n\n"
             "Проверь конфиг и добавь нужный URL.",
             reply_markup=party_keyboard(callback_data.strategy_id),
         )
@@ -199,7 +199,7 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
             logger.warning("Navigation requested for unknown strategy_id=%s", callback_data.strategy_id)
             await _safe_edit(
                 callback.message,
-                "❌ **Неизвестный режим**\n\nВернись в меню и выбери другой вариант.",
+                "❌ <b>Неизвестный режим</b>\n\nВернись в меню и выбери другой вариант.",
                 reply_markup=menu_keyboard(),
             )
             return
@@ -220,6 +220,6 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
     logger.warning("Unknown navigation action=%s", callback_data.action)
     await _safe_edit(
         callback.message,
-        "❌ **Ошибка навигации**\n\nНеизвестное действие.",
+        "❌ <b>Ошибка навигации</b>\n\nНеизвестное действие.",
         reply_markup=menu_keyboard(),
     )
