@@ -63,7 +63,7 @@ async def _safe_edit(message: Message | None, text: str, reply_markup=None) -> N
         return
 
     try:
-        await message.edit_text(text, reply_markup=reply_markup)
+        await message.edit_text(text, reply_markup=reply_markup, parse_mode='MarkdownV2')
     except TelegramBadRequest as exc:
         if "message is not modified" in str(exc).lower():
             return
@@ -77,7 +77,7 @@ async def on_strategy_trigger(message: Message) -> None:
         message.from_user.id if message.from_user else None,
         message.chat.id,
     )
-    await message.answer(_build_menu_text(), reply_markup=menu_keyboard())
+    await message.answer(_build_menu_text(), reply_markup=menu_keyboard(), parse_mode='MarkdownV2')
 
 
 @router.callback_query(StrategyCB.filter())
