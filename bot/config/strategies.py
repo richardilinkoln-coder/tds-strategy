@@ -37,7 +37,7 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "name": "Badlands 2",
         "emoji": "🏜",
         "modes": {
-            "solo": "<a href="https://docs.google.com/document/d/1p1rrgdI6JIeX6spTh5M_5q3r3PXYdVBIAtBWHJh8wZQ">Документ</a>",
+            'solo': '<a href="https://docs.google.com/document/d/1p1rrgdI6JIeX6spTh5M_5q3r3PXYdVBIAtBWHJh8wZQ">Документ</a>',
             "duo": "https://docs.google.com/document/d/19O4GQpDLS02Uc_7Tf2_sXamOysrbQp9wzOdokgXa5Ns/edit?tab=t.lmjpsx2che4",
             "trio": "https://docs.google.com/document/d/1xBvD-XsDlY-EQID989c7FPxAk2j8FN2fK0wdSU2ZJh8/edit?tab=t.sfxbztqbamlr#heading=h.5j8k7csi2use",
             "quad": "Пока что нету, когда появится - добавим.",
