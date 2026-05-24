@@ -10,7 +10,12 @@ PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "duo": {"label": "Duo", "emoji": "👥"},
     "trio": {"label": "Trio", "emoji": "👥👤"},
     "quad": {"label": "Quad", "emoji": "👥👥"},
-    "Сборник": {"label": "Сборник", "emoji": "📚"},
+    "Сборник: триалы": {"label": "Сборник: триалы", "emoji": "📚"},
+    "Сборник: миссии": {"label": "Сборник: миссии", "emoji": "📚"},
+    "Монеты": {"label": "Монеты", "emoji": "🪙"},
+    "Хардкор": {"label": "Хардкор", "emoji": "😈"},
+    "Текущий ивент": {"label": "Текущий ивент", "emoji": "💡"},
+    "Випка": {"label": "Сервер", "emoji": "🔱"},
 }
 
 STRATEGIES: Final[dict[str, dict[str, object]]] = {
@@ -58,6 +63,7 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "name": "Hardcore",
         "emoji": "🔥",
         "modes": {
+            "solo": "https://docs.google.com/document/d/1lpA6yBh5vulgWXHfIHVfYMz7YwgQ1c69UQnBO-lHscw/edit?tab=t.jrkpg6stcyff#heading=h.5j8k7csi2use",
             "duo": "https://docs.google.com/document/d/10EDazjYrsJEWPXIvqWUAy2tU_E67USG8iIr5gGn8HOg/edit?usp=sharing",
             "trio": "https://docs.google.com/document/d/1vijYCqX1o7jLdpoxy21rLuRGWclc9aGqpOVEHrVabRs/edit?tab=t.0",
         },
@@ -70,13 +76,43 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
             "duo": "https://docs.google.com/document/d/1LT-ViDySQeTrEeXY-ateAIkoQRpIdfG9rS2T_3RkjSs/edit?tab=t.j7622cginuso",         
         },
     },
-    "trials": {
-        "name": "Trials",
+    "trials_missons": {
+        "name": "Trials & Missions",
         "emoji": "🎭",
         "modes": {
-            "Сборник": "https://docs.google.com/document/d/1NzhAEK4WJ9cA2gDCcACtW-HXQHhJplrE-_ZKkPWXIJk/edit?tab=t.pdj0ytau4jf4",         
+            "Сборник: триалы": "https://docs.google.com/document/d/1NzhAEK4WJ9cA2gDCcACtW-HXQHhJplrE-_ZKkPWXIJk/edit?tab=t.pdj0ytau4jf4",
+            "Сборник: миссии": "https://docs.google.com/document/d/1uUXQ6MOk1aGwc0w5Pguy3CtLNNDVAAsLw0q3K8twU60/edit?tab=t.25a4twjptrse",
         },
-    },      
+    },
+    "coin_hard": {
+        "name": "Coin & Hardcore Grind",
+        "emoji": "💎",
+        "modes": {
+            "Монеты": "https://docs.google.com/document/d/123mTVHx7CYVKMSc5gconfTjpGScL07YFXwZfZcwnYjw/edit?tab=t.vv7j5i44mve0",
+            "Хардкор": "https://docs.google.com/document/d/10EDazjYrsJEWPXIvqWUAy2tU_E67USG8iIr5gGn8HOg/edit?tab=t.pdj0ytau4jf4",
+        },
+    },
+    "event": {
+        "name": "Event",
+        "emoji": "👻",
+        "modes": {
+            "Текущий ивент": "https://docs.google.com/document/d/1VuFYkUOnTM2NJlTTs4P9d7Eo7q8_Wz6Gl9eNySXv1J4/edit?tab=t.6r9ak694mdjb",
+        },
+    },
+    "ahiv": {
+        "name": "Achivements",
+        "emoji": "💈",
+        "modes": {
+            "Cборник": "Скоро будет",
+        },
+    },
+    "vip": {
+        "name": "Vip server",
+        "emoji": "🔑",
+        "modes": {
+            "Сервер": "https://www.roblox.com/games/3260590327?privateServerLinkCode=56597066406241925136479511848497",
+        },
+    },
 }
 
 def get_strategy(strategy_id: str) -> dict[str, object] | None:
