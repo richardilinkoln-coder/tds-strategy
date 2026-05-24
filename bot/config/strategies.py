@@ -17,7 +17,7 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "name": "Polluted Wastelands 2",
         "emoji": "☣️",
         "modes": {
-            "solo": "Пока что нету, когда появится - добавим."
+            "solo": "Пока что нету, когда появится - добавим.",
             "duo": "https://docs.google.com/document/d/1g5I0YzLPGT4u-urOAgsqw_9GxY1lObTxr_2QkOIiFG4/edit?tab=t.jtj5k7ze8ais#heading=h.etz4edhmc8jx",
             "trio": "https://docs.google.com/document/d/1hQeuIZ-NsI63MIUhlMExNKOEAvkJsnpb2WL2DcwHiXY/edit?tab=t.0",
             "quad":"https://docs.google.com/document/d/1g5I0YzLPGT4u-urOAgsqw_9GxY1lObTxr_2QkOIiFG4/edit?tab=t.2zbd8384d7i9#heading=h.ejy8walurqal",
@@ -37,7 +37,7 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "name": "Badlands 2",
         "emoji": "🏜",
         "modes": {
-            "solo": "<a href="https://docs.google.com/document/d/1p1rrgdI6JIeX6spTh5M_5q3r3PXYdVBIAtBWHJh8wZQ">Документ</a>"
+            "solo": "<a href="https://docs.google.com/document/d/1p1rrgdI6JIeX6spTh5M_5q3r3PXYdVBIAtBWHJh8wZQ">Документ</a>",
             "duo": "https://docs.google.com/document/d/19O4GQpDLS02Uc_7Tf2_sXamOysrbQp9wzOdokgXa5Ns/edit?tab=t.lmjpsx2che4",
             "trio": "https://docs.google.com/document/d/1xBvD-XsDlY-EQID989c7FPxAk2j8FN2fK0wdSU2ZJh8/edit?tab=t.sfxbztqbamlr#heading=h.5j8k7csi2use",
             "quad": "Пока что нету, когда появится - добавим.",
