@@ -16,7 +16,7 @@ PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "Хардкор": {"label": "Хардкор", "emoji": "😈"},
     "Текущий ивент": {"label": "Текущий ивент", "emoji": "💡"},
     "Сервер": {"label": "Сервер", "emoji": "🔱"},
-    "Сборник": {"label": "Сборник ачивок", "emoji": "📚"},
+    "Сборник ачивок": {"label": "Сборник ачивок", "emoji": "📚"},
 }
 
 STRATEGIES: Final[dict[str, dict[str, object]]] = {
