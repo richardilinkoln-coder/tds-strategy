@@ -8,8 +8,8 @@ PARTY_SIZE_ORDER: Final[tuple[str, ...]] = ("solo", "duo", "trio", "quad")
 PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "solo": {"label": "Solo", "emoji": "👤"},
     "duo": {"label": "Duo", "emoji": "👥"},
-    "trio": {"label": "Trio", "emoji": "👥👥"},
-    "quad": {"label": "Quad", "emoji": "🎯"},
+    "trio": {"label": "Trio", "emoji": "👥👤"},
+    "quad": {"label": "Quad", "emoji": "👥👥"},
 }
 
 STRATEGIES: Final[dict[str, dict[str, object]]] = {
