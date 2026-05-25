@@ -84,7 +84,7 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
             "duo": "https://docs.google.com/document/d/1LT-ViDySQeTrEeXY-ateAIkoQRpIdfG9rS2T_3RkjSs/edit?tab=t.j7622cginuso",         
         },
     },
-    "trials_missons": {
+    "trials_missions": {
         "name": "Trials & Missions",
         "emoji": "🎭",
         "modes": {
