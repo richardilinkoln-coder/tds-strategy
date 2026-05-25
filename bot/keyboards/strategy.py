@@ -39,7 +39,7 @@ def party_keyboard(strategy_id: str):
         text="⬅️ Назад",
         callback_data=NavCB(action="menu", strategy_id="_").pack(),
     )
-    builder.adjust(2, 2, 1)
+    builder.adjust(2, 1)
     return builder.as_markup()
 
 
@@ -53,5 +53,5 @@ def result_keyboard(strategy_id: str):
         text="🏠 В меню",
         callback_data=NavCB(action="menu", strategy_id="_").pack(),
     )
-    builder.adjust(2)
+    builder.adjust(1, 1)
     return builder.as_markup()
