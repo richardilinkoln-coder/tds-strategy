@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Final
 
 # Порядок размеров контролирует порядок кнопок.
-PARTY_SIZE_ORDER: Final[tuple[str, ...]] = ("solo", "duo", "trio", "quad", "Сборник", "Сервер","Текущий ивент", "Хардкор", "Монеты", "Сборник: миссии", "Сборник: триалы", "Сборник ачивок")
+PARTY_SIZE_ORDER: Final[tuple[str, ...]] = ("solo", "duo", "trio", "quad", "Сборник", "Сервер","Текущий ивент", "Хардкор", "Монеты", "Сборник: миссии", "Сборник: триалы", "Paladin", "Slayer", "Sentinel", "Ascended", "Security Guard", "tH3 GL1tcH", "Outlaw", "The cure")
 
 PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "solo": {"label": "Solo", "emoji": "👤"},
@@ -16,7 +16,14 @@ PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "Хардкор": {"label": "Хардкор", "emoji": "😈"},
     "Текущий ивент": {"label": "Текущий ивент", "emoji": "💡"},
     "Сервер": {"label": "Сервер", "emoji": "🔱"},
-    "Сборник ачивок": {"label": "Сборник ачивок", "emoji": "📚"},
+    "Paladin": {"label": "Paladin", "emoji": "🛡️"},
+    "Slayer": {"label": "Slayer", "emoji": "⚔️"},
+    "Sentinel": {"label": "Sentinel", "emoji": "👁️"},
+    "Ascended": {"label": "Ascended", "emoji": "😇"},
+    "Security Guard": {"label": "Security Guard", "emoji": "👮"},
+    "tH3 GL1tcH": {"label": "tH3 GL1tcH", "emoji": "👾"},
+    "Outlaw": {"label": "Outlaw", "emoji": "🤠"},
+    "The cure": {"label": "The cure", "emoji": "🧪"},
 }
 
 STRATEGIES: Final[dict[str, dict[str, object]]] = {
@@ -100,11 +107,18 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
             "Текущий ивент": "https://docs.google.com/document/d/1VuFYkUOnTM2NJlTTs4P9d7Eo7q8_Wz6Gl9eNySXv1J4/edit?tab=t.6r9ak694mdjb",
         },
     },
-    "ahiv": {
-        "name": "Achivements",
-        "emoji": "💈",
-        "modes": {
-            "Сборник ачивок": "Скоро будет",
+    "Achievements": {
+            "name": "Achievements",
+            "emoji": "🏆",
+            "modes": {
+                "Paladin": "https://docs.google.com/document/d/1EN6bWGCFcO_nJJqIlB5Vr-aGT-0AISA8N3KAaxzGr_8/edit?tab=t.sqhmkc1pj32b",
+                "Slayer": "https://docs.google.com/document/d/1EN6bWGCFcO_nJJqIlB5Vr-aGT-0AISA8N3KAaxzGr_8/edit?tab=t.vvmb7a6mp8xp",
+                "Sentinel": "https://docs.google.com/document/d/1aESThUZMja-_12S0x9qk6pVEnAYr26e6LCXtiRgSFeg/edit?tab=t.0",
+                "Ascended": "https://docs.google.com/document/d/1FCWXSKHbixD0oVm3YGlw5R8ufix6XzAu/edit",
+                "Security Guard": "https://docs.google.com/document/d/1piB9j_3yHU0uPnn-x4-uDCobwB79UUMEF2t3esqEoxE/edit?tab=t.0#heading=h.5j8k7csi2use",
+                "tH3 GL1tcH": "https://docs.google.com/document/d/1zOcGhrfL6UKRM0Nvy1J3Af13_JHPsLNeQBY6HnTMj6k/edit?tab=t.ql70wnutklqb",
+                "Outlaw": "https://docs.google.com/document/d/1p1rrgdI6JIeX6spTh5M_5q3r3PXYdVBIAtBWHJh8wZQ/edit",
+                "The cure": "Пока что нету, как появится - добавим.",
         },
     },
     "vip": {
