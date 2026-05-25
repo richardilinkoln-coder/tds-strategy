@@ -3,15 +3,15 @@ from __future__ import annotations
 from typing import Final
 
 # Порядок размеров контролирует порядок кнопок.
-PARTY_SIZE_ORDER: Final[tuple[str, ...]] = ("solo", "duo", "trio", "quad", "Сборник", "Сервер","Текущий ивент", "Хардкор", "Монеты", "Сборник: миссии", "Сборник: триалы", "Paladin", "Slayer", "Sentinel", "Ascended", "Security Guard", "tH3 GL1tcH", "Outlaw", "The cure")
+PARTY_SIZE_ORDER: Final[tuple[str, ...]] = ("solo", "duo", "trio", "quad", "Сборник", "Сервер","Текущий ивент", "Хардкор", "Монеты", "Сборник - миссии", "Сборник - триалы", "Paladin", "Slayer", "Sentinel", "Ascended", "Security Guard", "tH3 GL1tcH", "Outlaw", "The cure")
 
 PARTY_SIZE_META: Final[dict[str, dict[str, str]]] = {
     "solo": {"label": "Solo", "emoji": "👤"},
     "duo": {"label": "Duo", "emoji": "👥"},
     "trio": {"label": "Trio", "emoji": "👥👤"},
     "quad": {"label": "Quad", "emoji": "👥👥"},
-    "Сборник: триалы": {"label": "Сборник: триалы", "emoji": "📚"},
-    "Сборник: миссии": {"label": "Сборник: миссии", "emoji": "📚"},
+    "Сборник - триалы": {"label": "Сборник: триалы", "emoji": "📚"},
+    "Сборник - миссии": {"label": "Сборник: миссии", "emoji": "📚"},
     "Монеты": {"label": "Монеты", "emoji": "🪙"},
     "Хардкор": {"label": "Хардкор", "emoji": "😈"},
     "Текущий ивент": {"label": "Текущий ивент", "emoji": "💡"},
@@ -88,8 +88,8 @@ STRATEGIES: Final[dict[str, dict[str, object]]] = {
         "name": "Trials & Missions",
         "emoji": "🎭",
         "modes": {
-            "Сборник: триалы": "https://docs.google.com/document/d/1NzhAEK4WJ9cA2gDCcACtW-HXQHhJplrE-_ZKkPWXIJk/edit?tab=t.pdj0ytau4jf4",
-            "Сборник: миссии": "https://docs.google.com/document/d/1uUXQ6MOk1aGwc0w5Pguy3CtLNNDVAAsLw0q3K8twU60/edit?tab=t.25a4twjptrse",
+            "Сборник - триалы": "https://docs.google.com/document/d/1NzhAEK4WJ9cA2gDCcACtW-HXQHhJplrE-_ZKkPWXIJk/edit?tab=t.pdj0ytau4jf4",
+            "Сборник - миссии": "https://docs.google.com/document/d/1uUXQ6MOk1aGwc0w5Pguy3CtLNNDVAAsLw0q3K8twU60/edit?tab=t.25a4twjptrse",
         },
     },
     "coin_hard": {
