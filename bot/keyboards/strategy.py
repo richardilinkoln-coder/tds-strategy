@@ -39,7 +39,17 @@ def party_keyboard(strategy_id: str):
         text="⬅️ Назад",
         callback_data=NavCB(action="menu", strategy_id="_").pack(),
     )
-    builder.adjust(2, 1)
+    
+    # Динамическая раскладка: размеры по 2 в ряду, Назад отдельно
+    size_count = len(available_sizes)
+    if size_count % 2 == 0:
+        # Четное количество размеров: (2, 2, ..., 1)
+        adjust_args = [2] * (size_count // 2) + [1]
+    else:
+        # Нечетное количество размеров: (2, 2, ..., 1, 1)
+        adjust_args = [2] * (size_count // 2) + [1, 1]
+    
+    builder.adjust(*adjust_args)
     return builder.as_markup()
 
 
