@@ -76,3 +76,16 @@ async def get_latest_reviews(helper_id: int, limit: int = 3):
             ORDER BY id DESC LIMIT ?
         ''', (helper_id, limit)) as cursor:
             return await cursor.fetchall()
+
+
+
+# Добавить в конец файла bot/database/db.py
+async def save_review(helper_id: int, user_id: int, stars: int, comment: str | None = None):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute('''
+            INSERT INTO reviews (helper_id, user_id, stars, comment) 
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(helper_id, user_id) DO UPDATE SET 
+            stars=excluded.stars, comment=excluded.comment
+        ''', (helper_id, user_id, stars, comment))
+        await db.commit()
