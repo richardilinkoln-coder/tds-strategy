@@ -112,6 +112,7 @@ async def show_helper_card(callback: CallbackQuery, callback_data: HelperCB, sta
     await _safe_edit(callback.message, text, reply_markup=helper_card_keyboard(callback_data.helper_id, tg_nick))
 
 # ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
+# ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
 @router.callback_query(ReviewCB.filter(F.action == "start"))
 async def start_review(callback: CallbackQuery, callback_data: ReviewCB, state: FSMContext):
     # Включаем ожидание текста, сохраняем ID хелпера
@@ -120,36 +121,24 @@ async def start_review(callback: CallbackQuery, callback_data: ReviewCB, state: 
     
     text = (
         "✍️ <b>Оставление отзыва</b>\n\n"
-        "Если хотите оставить текстовый комментарий — <b>просто напишите его сейчас в чат</b>.\n\n"
-        "Или сразу выберите оценку ниже, чтобы оставить отзыв без текста:"
+        "Введите текст отзыва в чат, а затем нажмите на оценку ниже.\n"
+        "Если хотите оставить отзыв без текста — просто нажмите на оценку."
     )
     await callback.answer()
+    
+    # Обновляем сообщение с кнопками
     await _safe_edit(callback.message, text, reply_markup=review_stars_keyboard(callback_data.helper_id))
+    
+    # Отправляем отдельное сообщение перед вводом
+    await callback.message.answer("Введите комментарий к отзыву:")
 
 @router.message(ReviewStates.waiting_for_review_text)
 async def catch_review_text(message: Message, state: FSMContext):
-    # Ловим текст, обновляем дату в FSM и удаляем сообщение юзера, чтобы не засорять чат (если у бота есть права)
+    # Ловим текст, обновляем дату в FSM
     await state.update_data(comment=message.text)
     
-    try:
-        await message.delete()
-    except:
-        pass
-    
-    # Отправляем подтверждение, клавиатура остается старой (мы ее не генерируем заново, просто просим нажать кнопку)
-    msg = await message.answer("✅ <b>Текст сохранен!</b> Теперь нажмите на кнопку с количеством звезд, чтобы отправить отзыв.")
-    
-    # Автоудаление этого уведомления через 3 секунды (не блокируя бота)
-    import asyncio
-    asyncio.create_task(delete_message_delay(msg, 3))
-
-async def delete_message_delay(message: Message, delay: int):
-    import asyncio
-    await asyncio.sleep(delay)
-    try:
-        await message.delete()
-    except:
-        pass
+    # Никаких таймеров и удалений. Просто отправляем сообщение, которое останется в чате.
+    await message.answer("✅ <b>Текст сохранен!</b> Теперь нажмите на кнопку с количеством звезд выше, чтобы отправить отзыв.")
 
 @router.callback_query(ReviewCB.filter(F.action == "save"), ReviewStates.waiting_for_review_text)
 async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB, state: FSMContext):
@@ -157,7 +146,7 @@ async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB,
     data = await state.get_data()
     comment = data.get("comment")
     
-    # Сохраняем в БД
+    # Сохраняем в БД PostgreSQL
     await db.save_review(
         helper_id=callback_data.helper_id,
         user_id=callback.from_user.id,
@@ -187,6 +176,5 @@ async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB,
             text += f"{stars_str}{comment_str}\n"
             
     await _safe_edit(callback.message, text, reply_markup=helper_card_keyboard(callback_data.helper_id, tg_nick))
-
 
 # meowц
