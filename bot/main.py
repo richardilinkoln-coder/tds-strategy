@@ -8,9 +8,13 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+
+# Импорты твоих старых модулей
 from bot.handlers.strategy import router
 
-
+# Импорты новых модулей хелперов и базы данных
+from bot.database import db
+from bot.handlers.helpers import router as helpers_router
 
 
 def setup_logging() -> None:
@@ -43,10 +47,18 @@ async def main() -> None:
 
     dp = Dispatcher(storage=MemoryStorage())
 
+    # 1. ПОДКЛЮЧАЕМ РОУТЕРЫ
+    # Сначала твой старый роутер стратегий
     dp.include_router(router)
+    # Сразу под ним подключаем новый роутер хелперов
+    dp.include_router(helpers_router)
 
     # Удаляем старые накопленные апдейты
     await bot.delete_webhook(drop_pending_updates=True)
+
+    # 2. ИНИЦИАЛИЗИРУЕМ БАЗУ ДАННЫХ
+    # Создаем файл базы данных и таблицы прямо перед запуском бота
+    await db.init_db()
 
     logging.info("Starting TDS strategy bot...")
 
