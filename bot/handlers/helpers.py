@@ -49,6 +49,26 @@ async def cmd_add_helper(message: Message):
     else:
         await message.answer("⚠️ Этот пользователь уже добавлен как хелпер.")
 
+@router.message(Command("del_helper"), IsAdmin())
+async def cmd_del_helper(message: Message):
+    # Ожидаемый формат: /del_helper <tg_id>
+    args = message.text.split()[1:]
+    if len(args) != 1:
+        await message.answer("❌ Формат: /del_helper <tg_id>")
+        return
+    
+    try:
+        user_id = int(args[0])
+    except ValueError:
+        await message.answer("❌ ID пользователя должно быть числом.")
+        return
+
+    success = await db.delete_helper(user_id)
+    if success:
+        await message.answer(f"✅ Пользователь с ID <code>{user_id}</code> успешно удален из списка хелперов (все отзывы также стерты).")
+    else:
+        await message.answer("⚠️ Пользователь с таким ID не найден в списке хелперов.")
+
 # ================= МЕНЮ ХЕЛПЕРОВ =================
 @router.callback_query(HelperCB.filter(F.action == "list"))
 async def show_helpers_list(callback: CallbackQuery, state: FSMContext):
