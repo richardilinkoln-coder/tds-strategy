@@ -113,9 +113,9 @@ async def show_helper_card(callback: CallbackQuery, callback_data: HelperCB, sta
 
 # ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
 # ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
+# ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
 @router.callback_query(ReviewCB.filter(F.action == "start"))
 async def start_review(callback: CallbackQuery, callback_data: ReviewCB, state: FSMContext):
-    # Включаем ожидание текста, сохраняем ID хелпера
     await state.set_state(ReviewStates.waiting_for_review_text)
     await state.update_data(helper_id=callback_data.helper_id, comment=None)
     
@@ -125,26 +125,53 @@ async def start_review(callback: CallbackQuery, callback_data: ReviewCB, state: 
         "Если хотите оставить отзыв без текста — просто нажмите на оценку."
     )
     await callback.answer()
-    
-    # Обновляем сообщение с кнопками
     await _safe_edit(callback.message, text, reply_markup=review_stars_keyboard(callback_data.helper_id))
     
-    # Отправляем отдельное сообщение перед вводом
-    await callback.message.answer("Введите комментарий к отзыву:")
+    # Отправляем сообщение перед вводом и сохраняем его ID в FSM
+    prompt_msg = await callback.message.answer("Введите комментарий к отзыву:")
+    await state.update_data(prompt_msg_id=prompt_msg.message_id)
 
 @router.message(ReviewStates.waiting_for_review_text)
 async def catch_review_text(message: Message, state: FSMContext):
-    # Ловим текст, обновляем дату в FSM
-    await state.update_data(comment=message.text)
+    data = await state.get_data()
     
-    # Никаких таймеров и удалений. Просто отправляем сообщение, которое останется в чате.
-    await message.answer("✅ <b>Текст сохранен!</b> Теперь нажмите на кнопку с количеством звезд выше, чтобы отправить отзыв.")
+    # Сохраняем ID сообщений пользователя (вдруг он напишет несколько сообщений подряд)
+    user_msg_ids = data.get("user_msg_ids", [])
+    user_msg_ids.append(message.message_id)
+    
+    # Отправляем подтверждение и запоминаем его ID
+    success_msg = await message.answer("✅ <b>Текст сохранен!</b> Теперь нажмите на кнопку с количеством звезд выше, чтобы отправить отзыв.")
+    
+    # Обновляем все данные в памяти
+    await state.update_data(
+        comment=message.text, 
+        user_msg_ids=user_msg_ids,
+        success_msg_id=success_msg.message_id
+    )
 
 @router.callback_query(ReviewCB.filter(F.action == "save"), ReviewStates.waiting_for_review_text)
 async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB, state: FSMContext):
-    # Достаем текст из памяти (если юзер ничего не писал, там будет None)
     data = await state.get_data()
     comment = data.get("comment")
+    
+    # === БЛОК УДАЛЕНИЯ ВРЕМЕННЫХ СООБЩЕНИЙ ===
+    chat_id = callback.message.chat.id
+    msg_ids_to_delete = []
+    
+    if "prompt_msg_id" in data:
+        msg_ids_to_delete.append(data["prompt_msg_id"])
+    if "success_msg_id" in data:
+        msg_ids_to_delete.append(data["success_msg_id"])
+    if "user_msg_ids" in data:
+        msg_ids_to_delete.extend(data["user_msg_ids"])
+        
+    for msg_id in msg_ids_to_delete:
+        try:
+            await callback.bot.delete_message(chat_id=chat_id, message_id=msg_id)
+        except Exception:
+            # Если нет прав на удаление (или сообщение уже удалено), просто игнорируем ошибку
+            pass
+    # ==========================================
     
     # Сохраняем в БД PostgreSQL
     await db.save_review(
