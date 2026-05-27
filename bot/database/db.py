@@ -124,3 +124,6 @@ async def get_latest_reviews(helper_id: int, limit: int = 3):
         return [tuple(row) for row in rows]
     finally:
         await conn.close()
+
+
+# d
