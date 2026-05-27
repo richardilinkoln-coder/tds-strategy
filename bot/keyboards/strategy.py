@@ -1,4 +1,5 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from bot.utils.callbacks import HelperCB
 
 from bot.config.strategies import (
     PARTY_SIZE_META,
@@ -13,6 +14,9 @@ def _strategy_button_text(strategy_id: str) -> str:
     return f"{strategy['emoji']} {strategy['name']}"
 
 
+# Не забудь добавить импорт нового коллбека в начале файла:
+# from bot.utils.callbacks import HelperCB
+
 def menu_keyboard():
     builder = InlineKeyboardBuilder()
     for strategy_id in STRATEGIES:
@@ -20,9 +24,16 @@ def menu_keyboard():
             text=_strategy_button_text(strategy_id),
             callback_data=StrategyCB(strategy_id=strategy_id).pack(),
         )
-    builder.adjust(2)
+    
+    # --- НОВАЯ КНОПКА ---
+    builder.button(
+        text="🤝 Найти хелпера",
+        callback_data=HelperCB(action="list").pack(),
+    )
+    # --------------------
+    
+    builder.adjust(2) # aiogram сам перенесет кнопку хелперов на новую строку, если количество стратегий четное
     return builder.as_markup()
-
 
 def party_keyboard(strategy_id: str):
     builder = InlineKeyboardBuilder()
