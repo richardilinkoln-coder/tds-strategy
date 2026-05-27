@@ -1,108 +1,126 @@
-import aiosqlite
+import os
+import asyncpg
 import logging
 
 logger = logging.getLogger(__name__)
-DB_PATH = "helpers.db"
+
+# Получаем строку подключения из переменных Railway
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+async def get_connection():
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL variable is missing in environment!")
+    return await asyncpg.connect(DATABASE_URL)
 
 async def init_db():
-    async with aiosqlite.connect(DB_PATH) as db:
+    conn = await get_connection()
+    try:
         # Таблица хелперов
-        await db.execute('''
+        await conn.execute('''
             CREATE TABLE IF NOT EXISTS helpers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER UNIQUE,
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT UNIQUE,
                 tg_nick TEXT,
                 roblox_nick TEXT
             )
         ''')
-        # Таблица отзывов (UNIQUE защищает от накрутки: 1 юзер = 1 отзыв на хелпера)
-        await db.execute('''
+        # Таблица отзывов (UNIQUE связка для защиты от накрутки)
+        await conn.execute('''
             CREATE TABLE IF NOT EXISTS reviews (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 helper_id INTEGER,
-                user_id INTEGER,
+                user_id BIGINT,
                 stars INTEGER,
                 comment TEXT,
                 UNIQUE(helper_id, user_id)
             )
         ''')
-        await db.commit()
-        logger.info("Database initialized.")
+        logger.info("PostgreSQL database initialized successfully.")
+    finally:
+        await conn.close()
 
 async def add_helper(user_id: int, tg_nick: str, roblox_nick: str) -> bool:
-    async with aiosqlite.connect(DB_PATH) as db:
-        try:
-            await db.execute(
-                "INSERT INTO helpers (user_id, tg_nick, roblox_nick) VALUES (?, ?, ?)",
-                (user_id, tg_nick, roblox_nick)
-            )
-            await db.commit()
-            return True
-        except aiosqlite.IntegrityError:
-            return False # Хелпер с таким user_id уже есть
-
-async def get_helpers_top():
-    """Возвращает список хелперов, отсортированный по среднему рейтингу и количеству отзывов."""
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute('''
-            SELECT h.id, h.tg_nick, h.roblox_nick, 
-                   IFNULL(AVG(r.stars), 0) as avg_rating,
-                   COUNT(r.id) as review_count
-            FROM helpers h
-            LEFT JOIN reviews r ON h.id = r.helper_id
-            GROUP BY h.id
-            ORDER BY avg_rating DESC, review_count DESC
-        ''') as cursor:
-            return await cursor.fetchall()
-
-async def get_helper_info(helper_id: int):
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute('''
-            SELECT h.user_id, h.tg_nick, h.roblox_nick, 
-                   IFNULL(AVG(r.stars), 0) as avg_rating,
-                   COUNT(r.id) as review_count
-            FROM helpers h
-            LEFT JOIN reviews r ON h.id = r.helper_id
-            WHERE h.id = ?
-            GROUP BY h.id
-        ''', (helper_id,)) as cursor:
-            return await cursor.fetchone()
-
-async def get_latest_reviews(helper_id: int, limit: int = 3):
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute('''
-            SELECT stars, comment FROM reviews 
-            WHERE helper_id = ? 
-            ORDER BY id DESC LIMIT ?
-        ''', (helper_id, limit)) as cursor:
-            return await cursor.fetchall()
-
-
-
-# Добавить в конец файла bot/database/db.py
-async def save_review(helper_id: int, user_id: int, stars: int, comment: str | None = None):
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute('''
-            INSERT INTO reviews (helper_id, user_id, stars, comment) 
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(helper_id, user_id) DO UPDATE SET 
-            stars=excluded.stars, comment=excluded.comment
-        ''', (helper_id, user_id, stars, comment))
-        await db.commit()
-
-
-# Измененная функция в bot/database/db.py
+    conn = await get_connection()
+    try:
+        await conn.execute(
+            "INSERT INTO helpers (user_id, tg_nick, roblox_nick) VALUES ($1, $2, $3)",
+            user_id, tg_nick, roblox_nick
+        )
+        return True
+    except asyncpg.UniqueViolationError:
+        return False  # Хелпер уже есть
+    finally:
+        await conn.close()
 
 async def delete_helper(user_id: int) -> bool:
-    """Удаляет только хелпера по его Telegram ID. Отзывы остаются в базе."""
-    async with aiosqlite.connect(DB_PATH) as db:
-        # Проверяем, есть ли такой хелпер вообще
-        async with db.execute("SELECT id FROM helpers WHERE user_id = ?", (user_id,)) as cursor:
-            row = await cursor.fetchone()
-            if not row:
-                return False  # Хелпер не найден
+    conn = await get_connection()
+    try:
+        # Проверяем наличие хелпера
+        row = await conn.fetchrow("SELECT id FROM helpers WHERE user_id = $1", user_id)
+        if not row:
+            return False
         
-        # Удаляем хелпера из списка, но таблицу reviews НЕ трогаем
-        await db.execute("DELETE FROM helpers WHERE user_id = ?", (user_id,))
-        await db.commit()
+        await conn.execute("DELETE FROM helpers WHERE user_id = $1", user_id)
         return True
+    finally:
+        await conn.close()
+
+async def save_review(helper_id: int, user_id: int, stars: int, comment: str | None = None):
+    conn = await get_connection()
+    try:
+        # В Postgres ON CONFLICT синтаксис требует явного указания столбцов целевого уникального индекса
+        await conn.execute('''
+            INSERT INTO reviews (helper_id, user_id, stars, comment) 
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (helper_id, user_id) 
+            DO UPDATE SET stars = EXCLUDED.stars, comment = EXCLUDED.comment
+        ''', helper_id, user_id, stars, comment)
+    finally:
+        await conn.close()
+
+async def get_helpers_top():
+    conn = await get_connection()
+    try:
+        # COALESCE — аналог IFNULL в Postgres
+        # CAST(AVG(...) AS FLOAT) гарантирует, что питон получит число с плавающей точкой, а не тип Decimal
+        rows = await conn.fetch('''
+            SELECT h.id, h.tg_nick, h.roblox_nick, 
+                   CAST(COALESCE(AVG(r.stars), 0) AS FLOAT) as avg_rating,
+                   COUNT(r.id) as review_count
+            FROM helpers h
+            LEFT JOIN reviews r ON h.id = r.helper_id
+            GROUP BY h.id, h.tg_nick, h.roblox_nick
+            ORDER BY avg_rating DESC, review_count DESC
+        ''')
+        # Превращаем записи asyncpg.Record в обычные кортежи, чтобы не ломать код хендлеров
+        return [tuple(row) for row in rows]
+    finally:
+        await conn.close()
+
+async def get_helper_info(helper_id: int):
+    conn = await get_connection()
+    try:
+        row = await conn.fetchrow('''
+            SELECT h.user_id, h.tg_nick, h.roblox_nick, 
+                   CAST(COALESCE(AVG(r.stars), 0) AS FLOAT) as avg_rating,
+                   COUNT(r.id) as review_count
+            FROM helpers h
+            LEFT JOIN reviews r ON h.id = r.helper_id
+            WHERE h.id = $1
+            GROUP BY h.id, h.user_id, h.tg_nick, h.roblox_nick
+        ''', helper_id)
+        return tuple(row) if row else None
+    finally:
+        await conn.close()
+
+async def get_latest_reviews(helper_id: int, limit: int = 3):
+    conn = await get_connection()
+    try:
+        rows = await conn.fetch('''
+            SELECT stars, comment FROM reviews 
+            WHERE helper_id = $1 
+            ORDER BY id DESC LIMIT $2
+        ''', helper_id, limit)
+        return [tuple(row) for row in rows]
+    finally:
+        await conn.close()
