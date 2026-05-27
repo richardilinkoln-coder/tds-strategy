@@ -89,3 +89,20 @@ async def save_review(helper_id: int, user_id: int, stars: int, comment: str | N
             stars=excluded.stars, comment=excluded.comment
         ''', (helper_id, user_id, stars, comment))
         await db.commit()
+
+
+# Измененная функция в bot/database/db.py
+
+async def delete_helper(user_id: int) -> bool:
+    """Удаляет только хелпера по его Telegram ID. Отзывы остаются в базе."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        # Проверяем, есть ли такой хелпер вообще
+        async with db.execute("SELECT id FROM helpers WHERE user_id = ?", (user_id,)) as cursor:
+            row = await cursor.fetchone()
+            if not row:
+                return False  # Хелпер не найден
+        
+        # Удаляем хелпера из списка, но таблицу reviews НЕ трогаем
+        await db.execute("DELETE FROM helpers WHERE user_id = ?", (user_id,))
+        await db.commit()
+        return True
