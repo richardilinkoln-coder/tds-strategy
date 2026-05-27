@@ -187,3 +187,6 @@ async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB,
             text += f"{stars_str}{comment_str}\n"
             
     await _safe_edit(callback.message, text, reply_markup=helper_card_keyboard(callback_data.helper_id, tg_nick))
+
+
+# meow
