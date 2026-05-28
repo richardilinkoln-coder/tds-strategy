@@ -7,6 +7,8 @@ from aiogram.types import CallbackQuery, Message
 from bot.config.strategies import PARTY_SIZE_META, get_available_party_sizes, get_strategy
 from bot.keyboards.strategy import menu_keyboard, party_keyboard, result_keyboard
 from bot.utils.callbacks import NavCB, PartyCB, StrategyCB
+from bot.config.settings import SUPPORT_AGENTS
+from bot.keyboards.strategy import menu_keyboard, party_keyboard, result_keyboard, support_keyboard
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -22,6 +24,20 @@ def _build_menu_text() -> str:
         "Нажми на нужную карту, чтобы увидеть доступные размеры команды."
     )
 
+def _build_support_text() -> str:
+    text = (
+        "🎧 <b>Служба поддержки</b>\n\n"
+        "Вы увидели нарушение правил в этом чате, есть вопросы? Вы можете написать любому агенту из списка ниже:\n\n"
+    )
+    for agent in SUPPORT_AGENTS:
+        clean_agent = agent.replace("@", "")
+        text += f"👨‍💻 Агент: @{clean_agent}\n"
+        
+    text += (
+        "\nЛибо нажмите кнопку ниже, чтобы бот автоматически "
+        "выбрал для вас случайного дежурного агента 👇"
+    )
+    return text
 
 def _build_party_text(strategy_id: str) -> str:
     strategy = get_strategy(strategy_id)
@@ -207,6 +223,14 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
         )
         return
 
+    if callback_data.action == "support":
+        await _safe_edit(
+            callback.message,
+            _build_support_text(),
+            reply_markup=support_keyboard(),
+        )
+        return
+
     if callback_data.action == "party":
         if not get_strategy(callback_data.strategy_id):
             logger.warning("Navigation requested for unknown strategy_id=%s", callback_data.strategy_id)
@@ -216,7 +240,7 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
                 reply_markup=menu_keyboard(),
             )
             return
-
+            
         logger.info(
             "Navigation back to party strategy_id=%s user_id=%s chat_id=%s",
             callback_data.strategy_id,
