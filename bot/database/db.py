@@ -4,7 +4,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Получаем строку подключения из переменных Railway
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 async def get_connection():
@@ -15,7 +14,6 @@ async def get_connection():
 async def init_db():
     conn = await get_connection()
     try:
-        # Таблица хелперов
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS helpers (
                 id SERIAL PRIMARY KEY,
@@ -24,7 +22,6 @@ async def init_db():
                 roblox_nick TEXT
             )
         ''')
-        # Таблица отзывов (UNIQUE связка для защиты от накрутки)
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS reviews (
                 id SERIAL PRIMARY KEY,
@@ -35,6 +32,14 @@ async def init_db():
                 UNIQUE(helper_id, user_id)
             )
         ''')
+        
+        # Автоматически добавляем колонку для юзернейма, если её еще нет
+        try:
+            await conn.execute('ALTER TABLE reviews ADD COLUMN reviewer_username TEXT')
+            logger.info("Добавлена колонка reviewer_username.")
+        except asyncpg.exceptions.DuplicateColumnError:
+            pass # Колонка уже существует, всё ок
+            
         logger.info("PostgreSQL database initialized successfully.")
     finally:
         await conn.close()
@@ -48,41 +53,37 @@ async def add_helper(user_id: int, tg_nick: str, roblox_nick: str) -> bool:
         )
         return True
     except asyncpg.UniqueViolationError:
-        return False  # Хелпер уже есть
+        return False
     finally:
         await conn.close()
 
 async def delete_helper(user_id: int) -> bool:
     conn = await get_connection()
     try:
-        # Проверяем наличие хелпера
         row = await conn.fetchrow("SELECT id FROM helpers WHERE user_id = $1", user_id)
         if not row:
             return False
-        
         await conn.execute("DELETE FROM helpers WHERE user_id = $1", user_id)
         return True
     finally:
         await conn.close()
 
-async def save_review(helper_id: int, user_id: int, stars: int, comment: str | None = None):
+# Обновлено: теперь принимает reviewer_username
+async def save_review(helper_id: int, user_id: int, stars: int, comment: str | None = None, reviewer_username: str | None = None):
     conn = await get_connection()
     try:
-        # В Postgres ON CONFLICT синтаксис требует явного указания столбцов целевого уникального индекса
         await conn.execute('''
-            INSERT INTO reviews (helper_id, user_id, stars, comment) 
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO reviews (helper_id, user_id, stars, comment, reviewer_username) 
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (helper_id, user_id) 
-            DO UPDATE SET stars = EXCLUDED.stars, comment = EXCLUDED.comment
-        ''', helper_id, user_id, stars, comment)
+            DO UPDATE SET stars = EXCLUDED.stars, comment = EXCLUDED.comment, reviewer_username = EXCLUDED.reviewer_username
+        ''', helper_id, user_id, stars, comment, reviewer_username)
     finally:
         await conn.close()
 
 async def get_helpers_top():
     conn = await get_connection()
     try:
-        # COALESCE — аналог IFNULL в Postgres
-        # CAST(AVG(...) AS FLOAT) гарантирует, что питон получит число с плавающей точкой, а не тип Decimal
         rows = await conn.fetch('''
             SELECT h.id, h.tg_nick, h.roblox_nick, 
                    CAST(COALESCE(AVG(r.stars), 0) AS FLOAT) as avg_rating,
@@ -92,7 +93,6 @@ async def get_helpers_top():
             GROUP BY h.id, h.tg_nick, h.roblox_nick
             ORDER BY avg_rating DESC, review_count DESC
         ''')
-        # Превращаем записи asyncpg.Record в обычные кортежи, чтобы не ломать код хендлеров
         return [tuple(row) for row in rows]
     finally:
         await conn.close()
@@ -113,11 +113,12 @@ async def get_helper_info(helper_id: int):
     finally:
         await conn.close()
 
+# Обновлено: теперь возвращает ID отзыва и ник
 async def get_latest_reviews(helper_id: int, limit: int = 3):
     conn = await get_connection()
     try:
         rows = await conn.fetch('''
-            SELECT stars, comment FROM reviews 
+            SELECT id, stars, comment, reviewer_username FROM reviews 
             WHERE helper_id = $1 
             ORDER BY id DESC LIMIT $2
         ''', helper_id, limit)
@@ -125,5 +126,35 @@ async def get_latest_reviews(helper_id: int, limit: int = 3):
     finally:
         await conn.close()
 
+# НОВОЕ: Получить все отзывы
+async def get_all_reviews(helper_id: int):
+    conn = await get_connection()
+    try:
+        rows = await conn.fetch('''
+            SELECT id, stars, comment, reviewer_username FROM reviews 
+            WHERE helper_id = $1 
+            ORDER BY id DESC
+        ''', helper_id)
+        return [tuple(row) for row in rows]
+    finally:
+        await conn.close()
 
-# d
+# НОВОЕ: Проверить, есть ли уже отзыв от этого юзера
+async def get_user_review(helper_id: int, user_id: int):
+    conn = await get_connection()
+    try:
+        row = await conn.fetchrow('''
+            SELECT stars, comment FROM reviews WHERE helper_id = $1 AND user_id = $2
+        ''', helper_id, user_id)
+        return tuple(row) if row else None
+    finally:
+        await conn.close()
+
+# НОВОЕ: Удаление отзыва админом
+async def delete_review(review_id: int) -> bool:
+    conn = await get_connection()
+    try:
+        result = await conn.execute("DELETE FROM reviews WHERE id = $1", review_id)
+        return result != "DELETE 0"
+    finally:
+        await conn.close()
