@@ -5,10 +5,9 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
 
 from bot.config.strategies import PARTY_SIZE_META, get_available_party_sizes, get_strategy
-from bot.keyboards.strategy import menu_keyboard, party_keyboard, result_keyboard
-from bot.utils.callbacks import NavCB, PartyCB, StrategyCB
-from bot.config.settings import SUPPORT_AGENTS
 from bot.keyboards.strategy import menu_keyboard, party_keyboard, result_keyboard, support_keyboard
+from bot.utils.callbacks import NavCB, PartyCB, StrategyCB
+from bot.database import db
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -24,20 +23,23 @@ def _build_menu_text() -> str:
         "Нажми на нужную карту, чтобы увидеть доступные размеры команды."
     )
 
-def _build_support_text() -> str:
+
+def _build_support_text(support_agents: list[str]) -> str:
     text = (
         "🎧 <b>Служба поддержки</b>\n\n"
         "Вы увидели нарушение правил в этом чате, есть вопросы? Вы можете написать любому агенту из списка ниже:\n\n"
     )
-    for agent in SUPPORT_AGENTS:
-        clean_agent = agent.replace("@", "")
-        text += f"👨‍💻 Агент: @{clean_agent}\n"
-        
-    text += (
-        "\nЛибо нажмите кнопку ниже, чтобы бот автоматически "
-        "выбрал для вас случайного дежурного агента 👇"
-    )
+    if support_agents:
+        for agent in support_agents:
+            text += f"👨‍💻 Агент: @{agent}\n"
+        text += (
+            "\nЛибо нажмите кнопку ниже, чтобы бот автоматически "
+            "выбрал для вас случайного дежурного агента 👇"
+        )
+    else:
+        text += "<i>Агенты поддержки для данного чата еще не настроены.</i>"
     return text
+
 
 def _build_party_text(strategy_id: str) -> str:
     strategy = get_strategy(strategy_id)
@@ -70,13 +72,6 @@ def _build_result_text(strategy_id: str, party_size: str, link: str) -> str:
             doc_text = f'📄 <b>Документ:</b>\n<a href="{link}">Открыть документ</a>'
     else:
         doc_text = f'📄 {link}'
-
-    if strategy_id == "vip":
-        return (
-            f"{strategy_emoji} <b>{strategy_name}</b>\n"
-            f"{size_emoji} <b>{size_label}</b>\n\n"
-            f"{doc_text}"
-        )
 
     return (
         f"{strategy_emoji} <b>{strategy_name}</b>\n"
@@ -211,11 +206,6 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
     await callback.answer()
 
     if callback_data.action == "menu":
-        logger.info(
-            "Navigation to menu user_id=%s chat_id=%s",
-            callback.from_user.id if callback.from_user else None,
-            callback.message.chat.id if callback.message else None,
-        )
         await _safe_edit(
             callback.message,
             _build_menu_text(),
@@ -224,16 +214,16 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
         return
 
     if callback_data.action == "support":
+        agents = await db.get_support_agents(callback.message.chat.id)
         await _safe_edit(
             callback.message,
-            _build_support_text(),
-            reply_markup=support_keyboard(),
+            _build_support_text(agents),
+            reply_markup=support_keyboard(agents),
         )
         return
 
     if callback_data.action == "party":
         if not get_strategy(callback_data.strategy_id):
-            logger.warning("Navigation requested for unknown strategy_id=%s", callback_data.strategy_id)
             await _safe_edit(
                 callback.message,
                 "❌ <b>Неизвестный режим</b>\n\nВернись в меню и выбери другой вариант.",
@@ -241,12 +231,6 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
             )
             return
             
-        logger.info(
-            "Navigation back to party strategy_id=%s user_id=%s chat_id=%s",
-            callback_data.strategy_id,
-            callback.from_user.id if callback.from_user else None,
-            callback.message.chat.id if callback.message else None,
-        )
         await _safe_edit(
             callback.message,
             _build_party_text(callback_data.strategy_id),
@@ -254,7 +238,6 @@ async def on_navigation(callback: CallbackQuery, callback_data: NavCB) -> None:
         )
         return
 
-    logger.warning("Unknown navigation action=%s", callback_data.action)
     await _safe_edit(
         callback.message,
         "❌ <b>Ошибка навигации</b>\n\nНеизвестное действие.",
