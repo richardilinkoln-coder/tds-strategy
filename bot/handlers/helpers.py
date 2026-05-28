@@ -97,22 +97,8 @@ async def show_helpers_list(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(HelperCB.filter(F.action == "card"))
 async def show_helper_card(callback: CallbackQuery, callback_data: HelperCB, state: FSMContext):
     await state.clear()
-    # Просто вызываем нашу новую универсальную функцию!
     await send_helper_card(callback, callback_data.helper_id)
     
-    reviews = await db.get_latest_reviews(callback_data.helper_id, limit=3)
-    if reviews:
-        text += "💬 <b>Последние отзывы:</b>\n"
-        for r_stars, r_comment in reviews:
-            stars_str = "⭐" * r_stars
-            comment_str = f" - <i>«{r_comment}»</i>" if r_comment else ""
-            text += f"{stars_str}{comment_str}\n"
-    else:
-        text += "<i>Отзывов пока нет. Станьте первым!</i>"
-        
-    await callback.answer()
-    await _safe_edit(callback.message, text, reply_markup=helper_card_keyboard(callback_data.helper_id, tg_nick))
-
 # ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
 # ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
 # ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
