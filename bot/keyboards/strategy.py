@@ -89,16 +89,13 @@ def result_keyboard(strategy_id: str):
 def support_keyboard():
     builder = InlineKeyboardBuilder()
     
-    # Берем случайного агента для кнопки-рандомайзера
-    random_agent = random.choice(SUPPORT_AGENTS).replace("@", "")
-    
-    # Кнопка случайного выбора
+    # Создаем список кнопок
+    # Вместо готовой строки мы передаем выбор рандома прямо в генерацию кнопки!
     builder.button(
         text="🎲 Случайный агент",
-        url=f"https://t.me/{random_agent}"
+        url=f"https://t.me/{random.choice(SUPPORT_AGENTS).replace('@', '')}"
     )
     
-    # Кнопка Назад
     builder.button(
         text="⬅️ Назад",
         callback_data=NavCB(action="menu", strategy_id="_").pack()
