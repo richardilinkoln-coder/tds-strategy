@@ -1,4 +1,3 @@
-# bot/handlers/helpers.py
 import logging
 
 from aiogram import F, Router
@@ -6,16 +5,17 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.database import db
 from bot.utils.callbacks import HelperCB, ReviewCB
 from bot.keyboards.helpers import helpers_list_keyboard, helper_card_keyboard, review_stars_keyboard
 from bot.states.helpers import ReviewStates
 from bot.filters.admin import IsAdmin
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 router = Router()
 logger = logging.getLogger(__name__)
+
 
 async def _safe_edit(message: Message | None, text: str, reply_markup=None) -> None:
     if message is None:
@@ -27,17 +27,13 @@ async def _safe_edit(message: Message | None, text: str, reply_markup=None) -> N
             return
         raise
 
-# ================= АДМИНКА =================
-from aiogram.filters import Command
-from aiogram.types import Message
+
+# ================= АДМИНКА ХЕЛПЕРОВ =================
 
 @router.message(Command("add_helper"), IsAdmin())
 async def cmd_add_helper(message: Message):
     args = message.text.split()
-    
-    # Проверяем, что аргументов ровно 4 (команда + 3 параметра)
     if len(args) != 4:
-        # Убрали < >, добавили <code> для удобного копирования
         await message.answer(
             "❌ <b>Ошибка формата!</b>\n"
             "Используйте: <code>/add_helper ID ТГ_ник Roblox_ник</code>\n"
@@ -45,26 +41,26 @@ async def cmd_add_helper(message: Message):
         )
         return
 
-    # Защита от ввода букв или @username вместо ID
     try:
         user_id = int(args[1])
     except ValueError:
-        await message.answer("❌ <b>Ошибка:</b> ID должен быть числом! Бот не умеет добавлять по @username.")
+        await message.answer("❌ <b>Ошибка:</b> ID должен быть числом!")
         return
 
     tg_nick = args[2]
     roblox_nick = args[3]
+    chat_id = message.chat.id
 
-    success = await db.add_helper(user_id, tg_nick, roblox_nick)
+    success = await db.add_helper(chat_id, user_id, tg_nick, roblox_nick)
     if success:
-        await message.answer(f"✅ Хелпер {tg_nick} (Roblox: {roblox_nick}) успешно добавлен в базу.")
+        await message.answer(f"✅ Хелпер {tg_nick} (Roblox: {roblox_nick}) успешно добавлен в этот чат.")
     else:
-        await message.answer("⚠️ Этот пользователь уже числится в списке хелперов.")
+        await message.answer("⚠️ Этот пользователь уже числится хелпером в данном чате.")
+
 
 @router.message(Command("del_helper"), IsAdmin())
 async def cmd_del_helper(message: Message):
     args = message.text.split()
-    
     if len(args) != 2:
         await message.answer("❌ <b>Ошибка формата!</b>\nИспользуйте: <code>/del_helper ID</code>")
         return
@@ -75,17 +71,56 @@ async def cmd_del_helper(message: Message):
         await message.answer("❌ <b>Ошибка:</b> ID должен быть числом!")
         return
 
-    success = await db.delete_helper(user_id)
+    chat_id = message.chat.id
+    success = await db.delete_helper(chat_id, user_id)
     if success:
-        await message.answer(f"✅ Пользователь с ID <code>{user_id}</code> удален из списка хелперов. Его отзывы сохранены.")
+        await message.answer(f"✅ Пользователь с ID <code>{user_id}</code> удален из хелперов этого чата. Его отзывы сохранены.")
     else:
-        await message.answer("⚠️ Хелпер с таким ID не найден в базе.")
+        await message.answer("⚠️ Хелпер с таким ID не найден в этом чате.")
+
+
+# ================= АДМИНКА ПОДДЕРЖКИ ЧАТА =================
+
+@router.message(Command("add_agent"), IsAdmin())
+async def cmd_add_agent(message: Message):
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer("❌ <b>Ошибка формата!</b>\nИспользуйте: <code>/add_agent @username</code>")
+        return
+        
+    agent_nick = args[1].replace("@", "")
+    chat_id = message.chat.id
+    
+    success = await db.add_support_agent(chat_id, agent_nick)
+    if success:
+        await message.answer(f"✅ Агент @{agent_nick} успешно добавлен в список поддержки этого чата.")
+    else:
+        await message.answer("⚠️ Этот агент уже добавлен.")
+
+
+@router.message(Command("del_agent"), IsAdmin())
+async def cmd_del_agent(message: Message):
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer("❌ <b>Ошибка формата!</b>\nИспользуйте: <code>/del_agent @username</code>")
+        return
+        
+    agent_nick = args[1].replace("@", "")
+    chat_id = message.chat.id
+    
+    success = await db.delete_support_agent(chat_id, agent_nick)
+    if success:
+        await message.answer(f"✅ Агент @{agent_nick} удален из списка поддержки этого чата.")
+    else:
+        await message.answer("⚠️ Агент не найден в списке поддержки этого чата.")
+
 
 # ================= МЕНЮ ХЕЛПЕРОВ =================
+
 @router.callback_query(HelperCB.filter(F.action == "list"))
 async def show_helpers_list(callback: CallbackQuery, state: FSMContext):
-    await state.clear() # На всякий случай сбрасываем стейты
-    helpers_data = await db.get_helpers_top()
+    await state.clear()
+    helpers_data = await db.get_helpers_top(callback.message.chat.id)
     
     text = "🤝 <b>Раздел хелперов</b>\n\nЗдесь вы можете найти опытных игроков. Выберите хелпера из списка:"
     if not helpers_data:
@@ -94,29 +129,34 @@ async def show_helpers_list(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await _safe_edit(callback.message, text, reply_markup=helpers_list_keyboard(helpers_data))
 
+
 @router.callback_query(HelperCB.filter(F.action == "card"))
 async def show_helper_card(callback: CallbackQuery, callback_data: HelperCB, state: FSMContext):
     await state.clear()
     await send_helper_card(callback, callback_data.helper_id)
     
-# ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
-# ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
-# ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
+
 # ================= СИСТЕМА ОТЗЫВОВ (FSM) =================
 
 @router.callback_query(ReviewCB.filter(F.action == "start"))
 async def start_review(callback: CallbackQuery, callback_data: ReviewCB, state: FSMContext):
-    await state.set_state(ReviewStates.waiting_for_review_text)
-    await state.update_data(helper_id=callback_data.helper_id, comment=None)
+    helper = await db.get_helper_info(callback_data.helper_id)
+    if not helper:
+        await callback.answer("Хелпер не найден", show_alert=True)
+        return
+        
+    helper_user_id = helper[0]
     
-    # ПРОВЕРКА: Оставлял ли юзер отзыв ранее?
-    existing_review = await db.get_user_review(callback_data.helper_id, callback.from_user.id)
+    await state.set_state(ReviewStates.waiting_for_review_text)
+    await state.update_data(helper_id=callback_data.helper_id, helper_user_id=helper_user_id, comment=None)
+    
+    existing_review = await db.get_user_review(helper_user_id, callback.from_user.id)
     
     if existing_review:
         old_stars, old_comment = existing_review
         text = (
-            f"⚠️ <b>Внимание!</b> Вы уже оставляли отзыв (⭐ {old_stars}).\n\n"
-            "Если вы введете новый текст и выберете оценку, <b>старый отзыв будет перезаписан</b>.\n"
+            f"⚠️ <b>Внимание!</b> Вы уже оставляли отзыв этому хелперу (⭐ {old_stars}).\n\n"
+            "Если вы введете новый текст и выберете оценку, <b>ваш старый отзыв будет перезаписан</b>.\n"
             "Введите новый текст в чат (или нажмите на оценку, чтобы оставить отзыв без текста):"
         )
     else:
@@ -132,6 +172,7 @@ async def start_review(callback: CallbackQuery, callback_data: ReviewCB, state: 
     prompt_msg = await callback.message.answer("Введите комментарий к отзыву:")
     await state.update_data(prompt_msg_id=prompt_msg.message_id)
 
+
 @router.message(ReviewStates.waiting_for_review_text)
 async def catch_review_text(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -146,12 +187,13 @@ async def catch_review_text(message: Message, state: FSMContext):
         success_msg_id=success_msg.message_id
     )
 
+
 @router.callback_query(ReviewCB.filter(F.action == "save"), ReviewStates.waiting_for_review_text)
 async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB, state: FSMContext):
     data = await state.get_data()
     comment = data.get("comment")
+    helper_user_id = data.get("helper_user_id")
     
-    # Очистка чата от временных сообщений
     chat_id = callback.message.chat.id
     msg_ids_to_delete = []
     
@@ -165,12 +207,10 @@ async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB,
         except Exception:
             pass
             
-    # Захватываем юзернейм автора (если его нет - берем Имя)
     reviewer_username = callback.from_user.username or callback.from_user.first_name
     
-    # Сохраняем в БД с юзернеймом
     await db.save_review(
-        helper_id=callback_data.helper_id,
+        helper_user_id=helper_user_id,
         user_id=callback.from_user.id,
         stars=callback_data.stars,
         comment=comment,
@@ -179,14 +219,17 @@ async def save_review_callback(callback: CallbackQuery, callback_data: ReviewCB,
     
     await state.clear()
     await callback.answer("✅ Отзыв успешно сохранен!", show_alert=True)
-    
-    # Возвращаемся в карточку
     await send_helper_card(callback, callback_data.helper_id)
 
-# НОВОЕ: Обработчик кнопки "Все отзывы"
+
 @router.callback_query(ReviewCB.filter(F.action == "all"))
 async def show_all_reviews(callback: CallbackQuery, callback_data: ReviewCB):
-    reviews = await db.get_all_reviews(callback_data.helper_id)
+    helper = await db.get_helper_info(callback_data.helper_id)
+    if not helper:
+        await callback.answer("Хелпер не найден", show_alert=True)
+        return
+        
+    reviews = await db.get_all_reviews(helper[0])
     
     if not reviews:
         await callback.answer("Отзывов пока нет.", show_alert=True)
@@ -199,19 +242,18 @@ async def show_all_reviews(callback: CallbackQuery, callback_data: ReviewCB):
         comment_str = f" - <i>«{r_comment}»</i>" if r_comment else ""
         text += f"[ID: {r_id}] {stars_str} от {user_str}{comment_str}\n\n"
         
-    # Кнопка возврата к карточке
     builder = InlineKeyboardBuilder()
     builder.button(text="🔙 Назад к хелперу", callback_data=HelperCB(action="card", helper_id=callback_data.helper_id).pack())
     
     await callback.answer()
     await _safe_edit(callback.message, text, reply_markup=builder.as_markup())
 
-# НОВОЕ: Команда удаления отзыва для админов (Путь А)
+
 @router.message(Command("del_review"), IsAdmin())
 async def cmd_del_review(message: Message):
     args = message.text.split()
     if len(args) != 2:
-        await message.answer("❌ Формат: <code>/del_review ID_отзыва</code>\nID отзыва указан в скобках [ID: ...] в карточке.")
+        await message.answer("❌ Формат: <code>/del_review ID_отзыва</code>")
         return
         
     try:
@@ -226,10 +268,14 @@ async def cmd_del_review(message: Message):
     else:
         await message.answer("⚠️ Отзыв с таким ID не найден.")
 
-# Вспомогательная функция для рендеринга карточки (чтобы не дублировать код)
+
 async def send_helper_card(callback: CallbackQuery, helper_id: int):
     helper = await db.get_helper_info(helper_id)
-    _, tg_nick, roblox_nick, avg_rating, review_count = helper
+    if not helper:
+        await callback.answer("Карточка хелпера недоступна.", show_alert=True)
+        return
+        
+    helper_user_id, tg_nick, roblox_nick, avg_rating, review_count = helper
     
     text = (
         f"👤 <b>Хелпер:</b> {tg_nick}\n"
@@ -237,8 +283,7 @@ async def send_helper_card(callback: CallbackQuery, helper_id: int):
         f"⭐ <b>Рейтинг:</b> {avg_rating:.1f} (отзывов: {review_count})\n\n"
     )
     
-    # Показываем 3 последних отзыва с их ID
-    reviews = await db.get_latest_reviews(helper_id, limit=3)
+    reviews = await db.get_latest_reviews(helper_user_id, limit=3)
     if reviews:
         text += "💬 <b>Последние отзывы:</b>\n"
         for r_id, r_stars, r_comment, r_username in reviews:
@@ -248,4 +293,3 @@ async def send_helper_card(callback: CallbackQuery, helper_id: int):
             text += f"[ID: {r_id}] {stars_str} от {user_str}{comment_str}\n"
             
     await _safe_edit(callback.message, text, reply_markup=helper_card_keyboard(helper_id, tg_nick))
-# meowц
