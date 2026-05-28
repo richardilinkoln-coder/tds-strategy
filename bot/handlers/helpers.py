@@ -27,47 +27,58 @@ async def _safe_edit(message: Message | None, text: str, reply_markup=None) -> N
         raise
 
 # ================= АДМИНКА =================
+from aiogram.filters import Command
+from aiogram.types import Message
+
 @router.message(Command("add_helper"), IsAdmin())
 async def cmd_add_helper(message: Message):
-    # Ожидаемый формат: /add_helper 123456789 @tg_nick RobloxNick
-    args = message.text.split()[1:]
-    if len(args) != 3:
-        await message.answer("❌ Формат: /add_helper <tg_id> <tg_nick> <roblox_nick>")
-        return
+    args = message.text.split()
     
-    try:
-        user_id = int(args[0])
-        tg_nick = args[1]
-        roblox_nick = args[2]
-    except ValueError:
-        await message.answer("❌ ID пользователя должно быть числом.")
+    # Проверяем, что аргументов ровно 4 (команда + 3 параметра)
+    if len(args) != 4:
+        # Убрали < >, добавили <code> для удобного копирования
+        await message.answer(
+            "❌ <b>Ошибка формата!</b>\n"
+            "Используйте: <code>/add_helper ID ТГ_ник Roblox_ник</code>\n"
+            "<i>Пример: /add_helper 123456789 Иван ivan_pro</i>"
+        )
         return
+
+    # Защита от ввода букв или @username вместо ID
+    try:
+        user_id = int(args[1])
+    except ValueError:
+        await message.answer("❌ <b>Ошибка:</b> ID должен быть числом! Бот не умеет добавлять по @username.")
+        return
+
+    tg_nick = args[2]
+    roblox_nick = args[3]
 
     success = await db.add_helper(user_id, tg_nick, roblox_nick)
     if success:
         await message.answer(f"✅ Хелпер {tg_nick} (Roblox: {roblox_nick}) успешно добавлен в базу.")
     else:
-        await message.answer("⚠️ Этот пользователь уже добавлен как хелпер.")
+        await message.answer("⚠️ Этот пользователь уже числится в списке хелперов.")
 
 @router.message(Command("del_helper"), IsAdmin())
 async def cmd_del_helper(message: Message):
-    # Ожидаемый формат: /del_helper <tg_id>
-    args = message.text.split()[1:]
-    if len(args) != 1:
-        await message.answer("❌ Формат: /del_helper <tg_id>")
-        return
+    args = message.text.split()
     
+    if len(args) != 2:
+        await message.answer("❌ <b>Ошибка формата!</b>\nИспользуйте: <code>/del_helper ID</code>")
+        return
+        
     try:
-        user_id = int(args[0])
+        user_id = int(args[1])
     except ValueError:
-        await message.answer("❌ ID пользователя должно быть числом.")
+        await message.answer("❌ <b>Ошибка:</b> ID должен быть числом!")
         return
 
     success = await db.delete_helper(user_id)
     if success:
-        await message.answer(f"✅ Пользователь с ID <code>{user_id}</code> успешно удален из списка хелперов (все отзывы также стерты).")
+        await message.answer(f"✅ Пользователь с ID <code>{user_id}</code> удален из списка хелперов. Его отзывы сохранены.")
     else:
-        await message.answer("⚠️ Пользователь с таким ID не найден в списке хелперов.")
+        await message.answer("⚠️ Хелпер с таким ID не найден в базе.")
 
 # ================= МЕНЮ ХЕЛПЕРОВ =================
 @router.callback_query(HelperCB.filter(F.action == "list"))
