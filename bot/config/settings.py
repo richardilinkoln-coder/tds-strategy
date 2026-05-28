@@ -12,10 +12,3 @@ def load_settings() -> Settings:
     if not token:
         raise ValueError("BOT_TOKEN is missing. Create .env and set BOT_TOKEN=...")
     return Settings(bot_token=token)
-
-# Список агентов поддержки
-SUPPORT_AGENTS = [
-    "qzeyc",
-    "BELOVXUESOS",
-    "gyviii"
-]
