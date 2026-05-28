@@ -12,6 +12,7 @@ from bot.utils.callbacks import HelperCB, ReviewCB
 from bot.keyboards.helpers import helpers_list_keyboard, helper_card_keyboard, review_stars_keyboard
 from bot.states.helpers import ReviewStates
 from bot.filters.admin import IsAdmin
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 router = Router()
 logger = logging.getLogger(__name__)
