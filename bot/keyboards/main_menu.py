@@ -1,22 +1,21 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-# Если твои стратегии лежат в bot.config.strategies, импортируй их
 from bot.config.strategies import STRATEGIES 
+from bot.utils.callbacks import HelperCB  # <-- Добавили импорт фабрики
 
 def get_main_menu_keyboard():
     builder = InlineKeyboardBuilder()
     
-    # Сначала генерируем кнопки для всех стратегий из твоего словаря
     for strat_key, strat_data in STRATEGIES.items():
         builder.button(
             text=strat_data["name"], 
             callback_data=f"strat_{strat_key}"
         )
     
-    # Затем жестко добавляем кнопку Хелперов в самый низ (или перенеси выше)
+    # Теперь кнопка отправляет правильный сигнал, который понимает helpers.py
     builder.button(
         text="👥 Топ Хелперов",
-        callback_data="helpers_top"
+        callback_data=HelperCB(action="list").pack()
     )
     
-    builder.adjust(1) # По 1 кнопке в ряд
+    builder.adjust(1)
     return builder.as_markup()
