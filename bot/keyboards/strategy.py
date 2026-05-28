@@ -1,5 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from bot.utils.callbacks import HelperCB
+import random
+from bot.config.settings import SUPPORT_AGENTS
 
 from bot.config.strategies import (
     PARTY_SIZE_META,
@@ -24,6 +26,12 @@ def menu_keyboard():
             text=_strategy_button_text(strategy_id),
             callback_data=StrategyCB(strategy_id=strategy_id).pack(),
         )
+
+    # --- КНОПКА ПОДДЕРЖКИ (Предпоследняя) ---
+    builder.button(
+        text="🎧 Поддержка",
+        callback_data=NavCB(action="support", strategy_id="_").pack(),
+    )
     
     # --- НОВАЯ КНОПКА ---
     builder.button(
@@ -75,4 +83,26 @@ def result_keyboard(strategy_id: str):
         callback_data=NavCB(action="menu", strategy_id="_").pack(),
     )
     builder.adjust(1, 1)
+    return builder.as_markup()
+
+
+def support_keyboard():
+    builder = InlineKeyboardBuilder()
+    
+    # Берем случайного агента для кнопки-рандомайзера
+    random_agent = random.choice(SUPPORT_AGENTS).replace("@", "")
+    
+    # Кнопка случайного выбора
+    builder.button(
+        text="🎲 Случайный агент",
+        url=f"https://t.me/{random_agent}"
+    )
+    
+    # Кнопка Назад
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=NavCB(action="menu", strategy_id="_").pack()
+    )
+    
+    builder.adjust(1)
     return builder.as_markup()
