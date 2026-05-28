@@ -16,6 +16,6 @@ def load_settings() -> Settings:
 # Список агентов поддержки
 SUPPORT_AGENTS = [
     "qzeyc",
-    "richardilinkoln",
-    "ктото_еще"
+    "BELOVXUESOS",
+    "gyviii"
 ]
