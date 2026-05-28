@@ -38,7 +38,7 @@ def helper_card_keyboard(helper_id: int, tg_nick: str):
     # Кнопка Назад
     builder.button(
         text="🔙 Назад к списку",
-        callback_data="helpers_top"
+        callback_data=HelperCB(action="list").pack()  # <--- Заменили "helpers_top" на правильный коллбек
     )
     
     builder.adjust(1, 1, 1) # Каждая кнопка на новой строке
