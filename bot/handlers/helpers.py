@@ -96,18 +96,8 @@ async def show_helpers_list(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(HelperCB.filter(F.action == "card"))
 async def show_helper_card(callback: CallbackQuery, callback_data: HelperCB, state: FSMContext):
     await state.clear()
-    helper = await db.get_helper_info(callback_data.helper_id)
-    if not helper:
-        await callback.answer("Хелпер не найден", show_alert=True)
-        return
-    
-    _, tg_nick, roblox_nick, avg_rating, review_count = helper
-    
-    text = (
-        f"👤 <b>Хелпер:</b> {tg_nick}\n"
-        f"🎮 <b>Roblox ник:</b> <code>{roblox_nick}</code>\n"
-        f"⭐ <b>Рейтинг:</b> {avg_rating:.1f} (отзывов: {review_count})\n\n"
-    )
+    # Просто вызываем нашу новую универсальную функцию!
+    await send_helper_card(callback, callback_data.helper_id)
     
     reviews = await db.get_latest_reviews(callback_data.helper_id, limit=3)
     if reviews:
