@@ -25,22 +25,23 @@ def helpers_list_keyboard(helpers_data):
 def helper_card_keyboard(helper_id: int, tg_nick: str):
     builder = InlineKeyboardBuilder()
     
-    # Ссылка для связи (убираем @ если он есть в нике)
-    clean_nick = tg_nick.replace("@", "")
-    builder.button(
-        text="✉️ Связаться",
-        url=f"https://t.me/{clean_nick}"
-    )
+    # Кнопка Оставить отзыв
     builder.button(
         text="✍️ Оставить отзыв",
         callback_data=ReviewCB(action="start", helper_id=helper_id, stars=0).pack()
     )
+    # НОВАЯ КНОПКА: Все отзывы (action="all")
     builder.button(
-        text="⬅️ К списку",
-        callback_data=HelperCB(action="list", helper_id=0).pack()
+        text="📋 Все отзывы",
+        callback_data=ReviewCB(action="all", helper_id=helper_id, stars=0).pack()
+    )
+    # Кнопка Назад
+    builder.button(
+        text="🔙 Назад к списку",
+        callback_data="helpers_top"
     )
     
-    builder.adjust(1, 1, 1)
+    builder.adjust(1, 1, 1) # Каждая кнопка на новой строке
     return builder.as_markup()
 
 def review_stars_keyboard(helper_id: int):
